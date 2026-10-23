@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEGEND RPG</title>
+<style>
+:root{--bg:#101522;--panel:#1b2435;--panel2:#222e43;--gold:#ffd166;--text:#edf2ff;--muted:#aab6cc;--green:#70e1a1;--red:#ff7777;--blue:#79b8ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top,#263653 0,#101522 55%);color:var(--text);font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;min-height:100vh}
+button,input{font:inherit}
+button{border:0;border-radius:10px;padding:10px 14px;background:#4266a8;color:white;font-weight:700;cursor:pointer;transition:.15s}
+button:hover{filter:brightness(1.15);transform:translateY(-1px)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+button.secondary{background:#39465c}button.gold{background:#b47a16;color:#fff6d6}button.danger{background:#9f3f4b}
+.wrap{max-width:1100px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.logo{font-size:clamp(1.5rem,4vw,2.4rem);font-weight:1000;letter-spacing:2px;color:var(--gold);text-shadow:0 3px 20px #ffca5c33}
+.tag{color:var(--muted);font-size:.9rem}
+.card{background:linear-gradient(145deg,#202b40ee,#182131ee);border:1px solid #ffffff15;border-radius:18px;padding:18px;box-shadow:0 12px 32px #0002}
+.auth{max-width:460px;margin:7vh auto}
+h2,h3{margin-top:0}h2{color:var(--gold)}
+label{display:block;margin:10px 0 5px;color:var(--muted);font-size:.9rem}
+input{width:100%;border:1px solid #46536b;border-radius:10px;padding:12px;background:#101827;color:white;outline:none}
+input:focus{border-color:var(--blue)}
+.row{display:flex;gap:9px;flex-wrap:wrap}.row>*{flex:1}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.tabs button{background:#2c3950}.tabs button.active{background:#b47a16;color:white}
+.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);gap:16px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.wrap{padding:13px}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.stat{background:#101827;border-radius:12px;padding:11px}.stat small{display:block;color:var(--muted)}.stat strong{font-size:1.15rem}
+.bar{height:10px;background:#0c111b;border-radius:99px;overflow:hidden;margin:6px 0 12px}.bar span{display:block;height:100%;background:linear-gradient(90deg,#48c78e,#a5f3c5);width:50%}.bar.xp span{background:linear-gradient(90deg,#579bff,#9bd0ff)}
+.log{height:210px;overflow:auto;background:#0d1420;border-radius:12px;padding:12px;line-height:1.55;color:#d8e2f4;font-size:.93rem}
+.log p{margin:0 0 6px}.muted{color:var(--muted)}.goldText{color:var(--gold)}.good{color:var(--green)}.bad{color:var(--red)}
+.actiongrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.actiongrid button{min-height:48px}
+.list{display:grid;gap:8px}.item{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#101827;padding:12px;border-radius:12px}.item small{display:block;color:var(--muted)}
+.notice{padding:11px;border-radius:10px;background:#2b3850;color:#dbe7ff;margin:10px 0}
+
+.weapon-icon{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:#2a3850;font-size:1.45rem;margin-right:8px;flex-shrink:0}
+.battle-scene{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:14px;overflow:auto}
+.battle-backdrop{position:fixed;inset:0;background:#050914eF;backdrop-filter:blur(7px)}
+.battle-box{position:relative;width:min(820px,100%);background:linear-gradient(145deg,#253653,#121a29);border:1px solid #8aa7d955;border-radius:20px;padding:18px;box-shadow:0 25px 90px #0009;animation:sceneIn .45s ease-out}
+.scene-banner{text-align:center;color:var(--gold);font-weight:1000;letter-spacing:2px;font-size:1.2rem;padding:8px;animation:bannerFlash 1.2s ease-out}
+.battle-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.battle-heading h2{margin:4px 0}
+.arena{position:relative;display:flex;align-items:center;justify-content:space-around;min-height:210px;margin:10px 0;background:radial-gradient(ellipse at 50% 100%,#4c638a66,transparent 65%),linear-gradient(180deg,#111a2b,#1d2a40);border:1px solid #ffffff12;border-radius:16px;overflow:hidden}
+.fighter{position:relative;width:34%;display:flex;flex-direction:column;align-items:center;z-index:1}
+.fighter-art{font-size:clamp(4rem,12vw,6.8rem);filter:drop-shadow(0 8px 8px #0007);transform-origin:center bottom;position:relative}
+.fighter-label{font-weight:800;margin-top:3px}
+.fighter-aura{position:absolute;width:130px;height:90px;bottom:18px;border-radius:50%;background:#79b8ff22;filter:blur(8px)}
+.enemy-fighter .fighter-aura{background:#ff777733}
+.versus{font-weight:1000;color:#ffd166;font-style:italic;font-size:1.5rem;text-shadow:0 0 18px #ffd16666}
+.hero-fighter.attack .fighter-art{animation:heroAttack .42s ease-in-out}
+.enemy-fighter.hit .fighter-art{animation:enemyHit .42s ease-in-out}
+.enemy-fighter.attack .fighter-art{animation:enemyAttack .42s ease-in-out}
+.hero-fighter.heal .fighter-art{animation:healPulse .7s ease-in-out}
+.enemy-fighter.spawn .fighter-art{animation:enemySpawn .8s ease-out}
+.hit-number{position:absolute;z-index:3;left:72%;top:25%;font-size:2rem;font-weight:1000;color:#ff7b7b;text-shadow:0 2px 5px #000;animation:floatDamage .8s ease-out;pointer-events:none}
+.hit-number.heal-number{left:18%;color:#7dffb0}
+.battle-bars{display:grid;grid-template-columns:1fr 1fr;gap:14px}.bar-caption{display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:4px}.enemy-bar span{background:linear-gradient(90deg,#e34f61,#ff9a83)}
+.battle-message{background:#0d1420;border-radius:10px;padding:12px;margin:12px 0;min-height:48px;line-height:1.45}
+.battle-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.battle-actions button{padding:12px 7px}.battle-actions small{display:block;font-size:.75rem;font-weight:500}
+.battle-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;color:var(--muted);flex-wrap:wrap}
+@keyframes sceneIn{from{opacity:0;transform:scale(.94) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes bannerFlash{0%{opacity:0;transform:translateY(-8px)}25%{opacity:1;text-shadow:0 0 24px #ffd166}100%{text-shadow:none}}
+@keyframes heroAttack{0%{transform:translateX(0) rotate(0)}45%{transform:translateX(65px) rotate(-12deg) scale(1.12)}100%{transform:translateX(0) rotate(0)}}
+@keyframes enemyHit{0%,100%{transform:translateX(0);filter:brightness(1)}25%{transform:translateX(14px) rotate(8deg);filter:brightness(2)}60%{transform:translateX(-9px);filter:brightness(1.5)}}
+@keyframes enemyAttack{0%,100%{transform:translateX(0)}45%{transform:translateX(-55px) rotate(10deg) scale(1.1)}}
+@keyframes healPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 #70e1a1)}50%{transform:scale(1.12);filter:drop-shadow(0 0 22px #70e1a1)}}
+@keyframes enemySpawn{0%{opacity:0;transform:scale(.1) rotate(-25deg);filter:brightness(4)}65%{opacity:1;transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes floatDamage{0%{opacity:0;transform:translateY(18px) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-35px) scale(1.15)}}
+@media(max-width:560px){.battle-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.arena{min-height:175px}.battle-box{padding:12px}.battle-foot .tiny{width:100%}}
+.hidden{display:none!important}.tiny{font-size:.82rem;color:var(--muted)}footer{text-align:center;color:#74829a;padding:25px 0;font-size:.8rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><div class="logo">⚔ LEGEND RPG</div><div class="tag">모험가의 전설이 시작된다</div></div><div id="headerUser" class="tag"></div></header>
+<section id="authView" class="card auth">
+  <h2>모험을 시작하자</h2>
+  <p class="muted">계정을 만들거나 로그인해 캐릭터를 관리해.</p>
+  <div class="tabs"><button id="loginTab" class="active" onclick="setAuthMode('login')">로그인</button><button id="registerTab" onclick="setAuthMode('register')">회원가입</button></div>
+  <form id="authForm">
+    <label for="username">아이디 (3글자 이상)</label><input id="username" minlength="3" maxlength="20" autocomplete="username" required>
+    <label for="password">비밀번호 (4글자 이상)</label><input id="password" type="password" minlength="4" autocomplete="current-password" required>
+    <div id="confirmWrap" class="hidden"><label for="confirmPassword">비밀번호 확인</label><input id="confirmPassword" type="password" minlength="4" autocomplete="new-password"></div>
+    <button id="authSubmit" type="submit" style="width:100%;margin-top:16px">로그인</button>
+  </form>
+  <p id="authMsg" class="tiny" role="status"></p>
+  <div class="notice tiny">저장 정보는 이 브라우저에 보관돼. 브라우저 데이터 삭제나 다른 기기에서는 유지되지 않을 수 있어. 실제 서비스용 보안 계정은 아니니 평소 비밀번호는 사용하지 마.</div>
+</section>
+
+<section id="gameView" class="hidden">
+  <div class="row" style="align-items:center;justify-content:space-between">
+    <div><h2 id="welcome" style="margin-bottom:4px"></h2><div class="muted tiny">계정별 캐릭터 자동 저장</div></div>
+    <div class="row" style="flex:0 1 auto"><button class="secondary" onclick="saveGame(true)">저장</button><button class="danger" onclick="logout()">로그아웃</button></div>
+  </div>
+  <div class="layout">
+    <div class="card">
+      <h3>🧙 캐릭터 상태</h3>
+      <div class="stats">
+        <div class="stat"><small>레벨</small><strong id="levelStat">1</strong></div>
+        <div class="stat"><small>골드</small><strong id="goldStat">100</strong></div>
+        <div class="stat"><small>공격력</small><strong id="atkStat">10</strong></div>
+      </div>
+      <div>❤️ 체력 <b id="hpText"></b></div><div class="bar"><span id="hpBar"></span></div>
+      <div>✨ 경험치 <b id="xpText"></b></div><div class="bar xp"><span id="xpBar"></span></div>
+      <p>직업: <b id="jobText">초보자</b> · 무기: <span id="weaponCurrentIcon" class="weapon-icon">⚔️</span><b id="weaponText">나무 검</b></p>
+      <p class="muted tiny">처치한 몬스터: <span id="killsText">0</span> · 보스 처치: <span id="bossText">0</span></p>
+      <div class="actiongrid">
+        <button onclick="hunt(false)">🌲 일반 사냥</button><button class="gold" onclick="hunt(true)">🐉 보스 도전</button>
+        <button onclick="usePotion()">🧪 포션 사용</button><button onclick="showPanel('shop')">🛒 상점</button>
+        <button onclick="showPanel('weapons')">⚔ 무기 관리</button><button onclick="showPanel('job')">🎖 전직</button>
+        <button onclick="showPanel('quest')">📜 퀘스트</button><button class="secondary" onclick="showPanel('inventory')">🎒 인벤토리</button>
+        <button onclick="showPanel('armor')">🛡 방어구</button><button onclick="showPanel('skills')">✨ 스킬 트리</button>
+        <button onclick="showPanel('regions')">🗺 지역 탐험</button><button onclick="showPanel('pets')">🐾 펫</button>
+        <button onclick="showPanel('enchant')">💎 인챈트</button><button onclick="showPanel('craft')">🔨 제작·분해</button>
+        <button onclick="showPanel('dungeon')">🌀 던전·스토리</button>
+        <button onclick="showPanel('tower')">🏰 무한의 탑</button><button onclick="showPanel('achievements')">🏆 업적·칭호</button>
+        <button onclick="showPanel('online')">🌐 온라인 광장</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📖 모험 기록</h3>
+      <div id="log" class="log" aria-live="polite"><p>환영해! 일반 사냥으로 경험치와 골드를 모아 봐.</p></div>
+      <div class="row" style="margin-top:10px"><button class="secondary" onclick="clearLog()">기록 지우기</button><button onclick="saveGame(true)">진행 저장</button></div>
+      <div id="panel" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<div id="battleScene" class="battle-scene hidden" role="dialog" aria-modal="true" aria-labelledby="battleTitle">
+  <div class="battle-backdrop"></div>
+  <div class="battle-box">
+    <div class="scene-banner" id="sceneBanner">⚔ 전투 시작!</div>
+    <div class="battle-heading"><div><div class="tag" id="battleKind">일반 사냥</div><h2 id="battleTitle">몬스터</h2></div><button class="secondary" onclick="tryEscape()">도망</button></div>
+    <div class="arena">
+      <div class="fighter hero-fighter" id="heroFighter"><div class="fighter-aura"></div><div class="fighter-art" id="heroArt">🧙</div><div class="fighter-label">모험가</div></div>
+      <div class="versus">VS</div>
+      <div class="fighter enemy-fighter" id="enemyFighter"><div class="fighter-aura"></div><div class="fighter-art" id="enemyArt">👾</div><div class="fighter-label" id="enemyLabel">몬스터</div></div>
+      <div class="hit-number hidden" id="hitNumber">-10</div>
+    </div>
+    <div class="battle-bars">
+      <div><div class="bar-caption"><span>내 체력</span><b id="battleHeroHpText"></b></div><div class="bar"><span id="battleHeroHpBar"></span></div></div>
+      <div><div class="bar-caption"><span id="enemyHpCaption">적 체력</span><b id="battleEnemyHpText"></b></div><div class="bar enemy-bar"><span id="battleEnemyHpBar"></span></div></div>
+    </div>
+    <div id="battleMessage" class="battle-message">전투 준비!</div>
+    <div class="battle-actions">
+      <button onclick="playerAction('attack')">⚔ 기본 공격</button>
+      <button class="gold" onclick="playerAction('slash')">💥 파워 슬래시 <small>(MP 10)</small></button>
+      <button onclick="playerAction('fire')">🔥 화염구 <small>(MP 15)</small></button>
+      <button class="secondary" onclick="playerAction('heal')">✨ 회복 <small>(MP 12)</small></button>
+      <button class="gold" onclick="playerAction('ultimate')">🌟 궁극기 <small>(MP 25)</small></button>
+    </div>
+    <div class="battle-foot"><span>MP: <b id="mpText">30 / 30</b></span><span class="tiny">스킬은 MP를 사용해. 전투 후 MP가 회복돼.</span></div>
+    <button id="battleContinue" class="gold hidden" style="width:100%;margin-top:12px" onclick="closeBattle()">마을로 돌아가기</button>
+  </div>
+</div>
+<footer>LEGEND RPG · 온라인 서버 저장 버전</footer>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const DB_KEY = "legendRpgWeb_v1";
+let users = {};
+let currentUser = null;
+let authMode = "login";
+let p = null;
+let battleLock = false;
+let onlineToken = localStorage.getItem("legendRpgOnlineToken") || "";
+const API = "";
+async function api(path, method="GET", data=null){const headers={};if(onlineToken)headers.Authorization="Bearer "+onlineToken;if(data)headers["Content-Type"]="application/json";const r=await fetch(API+path,{method,headers,body:data?JSON.stringify(data):undefined});const out=await r.json().catch(()=>({error:"서버 응답을 읽을 수 없어."}));if(!r.ok)throw new Error(out.error||"요청 실패");return out;}
+
+const weapons = [
+ {name:"나무 검",atk:0,cost:0,rarity:"일반"},
+ {name:"철검",atk:8,cost:80,rarity:"일반"},
+ {name:"강철 검",atk:18,cost:250,rarity:"고급"},
+ {name:"미스릴 검",atk:35,cost:800,rarity:"희귀"},
+ {name:"성기사의 검",atk:70,cost:3200,rarity:"영웅"},
+ {name:"이클립스",atk:120,cost:10000,rarity:"전설"},
+ {name:"마왕의 검",atk:150,cost:15000,rarity:"전설"},
+ {name:"이클립스 EX",atk:250,cost:50000,rarity:"신화"},
+ {name:"드래곤 슬레이어",atk:65,cost:2500,rarity:"영웅"},
+ {name:"천공의 심판",atk:200,cost:30000,rarity:"신화"},
+ {name:"광전사의 도끼",atk:45,cost:1200,rarity:"희귀"},
+ {name:"세계수 파괴자",atk:190,cost:28000,rarity:"신화"},
+ {name:"번개의 창",atk:40,cost:1100,rarity:"희귀"},
+ {name:"신의 창",atk:180,cost:25000,rarity:"신화"},
+ {name:"그림자 칼날",atk:38,cost:1000,rarity:"희귀"},
+ {name:"죽음의 인도자",atk:140,cost:12000,rarity:"전설"},
+ {name:"엘프의 활",atk:32,cost:900,rarity:"희귀"},
+ {name:"천사의 활",atk:130,cost:11000,rarity:"전설"},
+ {name:"얼음 지팡이",atk:36,cost:950,rarity:"희귀"},
+ {name:"창조의 지팡이",atk:185,cost:27000,rarity:"신화"}
+];
+const monsters = [
+ {name:"슬라임",hp:25,atk:5,exp:15,gold:10},
+ {name:"고블린",hp:45,atk:9,exp:25,gold:20},
+ {name:"숲의 늑대",hp:65,atk:12,exp:35,gold:30},
+ {name:"해골 병사",hp:100,atk:18,exp:50,gold:45},
+ {name:"오크 전사",hp:150,atk:25,exp:75,gold:70}
+];
+function readDB(){
+ try { const raw=localStorage.getItem(DB_KEY); users=raw?JSON.parse(raw):{}; }
+ catch(e){users={};}
+}
+function writeDB(){
+ try {localStorage.setItem(DB_KEY,JSON.stringify(users));return true;}
+ catch(e){logMsg("브라우저 저장에 실패했어. 저장 공간이나 개인정보 설정을 확인해 줛.", "bad");return false;}
+}
+function setAuthMode(mode){
+ authMode=mode;
+ $("loginTab").classList.toggle("active",mode==="login");
+ $("registerTab").classList.toggle("active",mode==="register");
+ $("confirmWrap").classList.toggle("hidden",mode!=="register");
+ $("confirmPassword").required=mode==="register";
+ $("authSubmit").textContent=mode==="login"?"로그인":"회원가입";
+ $("authMsg").textContent="";
+}
+$("authForm").addEventListener("submit",async e=>{
+ e.preventDefault();const username=$("username").value.trim(),password=$("password").value;
+ if(username.length<3||password.length<4){$("authMsg").textContent="아이디는 3글자, 비밀번호는 4글자 이상이어야 해.";return;}
+ try{
+  const route=authMode==="register"?"/api/register":"/api/login";
+  if(authMode==="register"&&password!==$("confirmPassword").value){$("authMsg").textContent="비밀번호가 일치하지 않아.";return;}
+  const result=await api(route,"POST",{username,password});onlineToken=result.token;localStorage.setItem("legendRpgOnlineToken",onlineToken);currentUser=result.username;
+  const saved=authMode==="login"?result.game:(null);
+  p=saved?JSON.parse(JSON.stringify(saved)):newGame();
+  p.armor=p.armor||{};p.skills=p.skills||{};p.skillPoints=p.skillPoints||0;p.pets=p.pets||[];p.enchant=p.enchant||{};p.achievements=p.achievements||[];p.inventory=p.inventory||[];p.region=p.region||1;p.tower=p.tower||0;
+  $("authView").classList.add("hidden");$("gameView").classList.remove("hidden");$("headerUser").textContent="온라인 로그인: "+username;$("welcome").textContent=p.name+"의 모험";render();showPanel("home");
+  logMsg(saved?"서버에서 저장된 캐릭터를 불러왔어!":"온라인 모험 시작! 캐릭터가 서버에 저장돼.","good");saveGame(false);
+ }catch(err){$("authMsg").textContent=err.message+ (authMode==="register"?" (온라인 비밀번호는 8자 이상이어야 해.)":"");}
+});
+
+function newGame(){
+ return {name:currentUser||"모험가",level:1,exp:0,gold:100,hp:100,maxHp:100,baseAtk:10,jobBonus:0,weapon:"나무 검",weaponLevel:0,owned:["나무 검"],job:"초보자",potions:5,kills:0,bossKills:0,questClaimed:false,inventory:[],armor:{},skillPoints:0,skills:{},region:1,tower:0,pets:[],achievements:[],title:"초보 모험가",enchant:{},status:{}};
+}
+let saveTimer=null;
+let saveQueue=Promise.resolve();
+function saveGame(showMessage=false){
+ if(!currentUser||!p)return;
+ const snapshot=JSON.parse(JSON.stringify(p));
+ clearTimeout(saveTimer);
+ saveTimer=setTimeout(()=>{
+  saveQueue=saveQueue.then(async()=>{
+   if(!onlineToken||!currentUser)return;
+   try{await api("/api/game","POST",{game:snapshot});if(showMessage)logMsg("서버 저장 완료!","good");}
+   catch(e){logMsg("서버 저장 실패: "+e.message,"bad");}
+  });
+ },250);
+}
+async function logout(){
+ clearTimeout(saveTimer);
+ if(currentUser&&p&&onlineToken){try{await api("/api/game","POST",{game:p});}catch(e){} try{await api("/api/logout","POST",{});}catch(e){}}
+ onlineToken="";localStorage.removeItem("legendRpgOnlineToken");currentUser=null;p=null;
+ $("gameView").classList.add("hidden");$("authView").classList.remove("hidden");$("headerUser").textContent="";
+ $("password").value="";$("confirmPassword").value="";setAuthMode("login");
+}
+function logMsg(message,kind=""){
+ const log=$("log");const line=document.createElement("p");if(kind)line.className=kind;line.textContent=message;log.appendChild(line);log.scrollTop=log.scrollHeight;
+}
+function clearLog(){$("log").innerHTML="<p>모험 기록을 지웠어.</p>";}
+function atk(){const w=weapons.find(x=>x.name===p.weapon);return p.baseAtk+p.jobBonus+(w?w.atk:0)+p.weaponLevel*5;}
+function render(){
+ $("levelStat").textContent=p.level;$("goldStat").textContent=p.gold;$("atkStat").textContent=atk();
+ $("hpText").textContent=Math.max(0,p.hp)+" / "+p.maxHp;$("hpBar").style.width=Math.max(0,Math.min(100,p.hp/p.maxHp*100))+"%";
+ $("xpText").textContent=p.exp+" / "+(p.level*30);$("xpBar").style.width=Math.min(100,p.exp/(p.level*30)*100)+"%";
+ $("jobText").textContent=p.job;$("weaponText").textContent=p.weapon+" +"+p.weaponLevel;$("weaponCurrentIcon").textContent=weaponEmoji(p.weapon);
+ $("killsText").textContent=p.kills;$("bossText").textContent=p.bossKills;
+ saveGame(false);
+}
+function gainXp(amount){
+ p.exp+=amount;
+ while(p.exp>=p.level*30){p.exp-=p.level*30;p.level++;p.baseAtk+=3;p.maxHp+=15;p.hp=p.maxHp;logMsg("레벨 업! 레벨 "+p.level+" · 공격력 +3 · 최대 체력 +15","good");}
+}
+let battleState=null;
+const monsterArt={"슬라임":"🟢","고블린":"👺","숲의 늑대":"🐺","해골 병사":"💀","오크 전사":"👹","숲의 왕":"🌳","고블린 대장":"👺","해골 기사":"☠️","불꽃 드래곤":"🐉","마왕":"😈"};
+function hunt(isBoss){
+ if(battleLock||battleState)return;
+ const region=Math.min(5,Math.floor((p.level-1)/5)+1);
+ let m;
+ if(isBoss){
+  const names=["숲의 왕","고블린 대장","해골 기사","불꽃 드래곤","마왕"];
+  m={name:names[region-1],hp:100+region*100,atk:12+region*8,exp:100+region*40,gold:100+region*60};
+ }else{
+  const base=monsters[Math.floor(Math.random()*monsters.length)];
+  m={name:base.name,hp:base.hp+region*10,atk:base.atk+region*2,exp:base.exp+region*5,gold:base.gold+region*5};
+ }
+ battleState={monster:m,hp:m.hp,maxHp:m.hp,boss:isBoss,mp:30,maxMp:30,done:false};
+ battleLock=false;
+ $("battleScene").classList.remove("hidden");
+ $("battleKind").textContent=isBoss?"보스 전투 · 지역 "+region:"일반 사냥 · 지역 "+region;
+ $("battleTitle").textContent=m.name;
+ $("enemyLabel").textContent=m.name;
+ $("enemyArt").textContent=monsterArt[m.name]||"👾";
+ $("heroArt").textContent=p.job==="마법사"?"🧙":p.job==="기사"?"🛡️":p.job==="암살자"?"🥷":"🧝";
+ $("sceneBanner").textContent=isBoss?"⚠ 강력한 보스가 나타났다!":"⚔ "+m.name+" 등장!";
+ $("battleMessage").textContent=isBoss?"보스의 공격을 조심해! 스킬을 활용해 쓰러뜨리자.":"전투 시작! 공격이나 스킬을 선택해.";
+ $("battleContinue").classList.add("hidden");
+ document.querySelectorAll(".battle-actions button").forEach(b=>b.disabled=false);
+ $("enemyFighter").classList.remove("spawn","hit","attack");
+ void $("enemyFighter").offsetWidth;
+ $("enemyFighter").classList.add("spawn");
+ updateBattleUI();
+}
+function updateBattleUI(){
+ if(!battleState)return;
+ const b=battleState;
+ $("battleHeroHpText").textContent=Math.max(0,p.hp)+" / "+p.maxHp;
+ $("battleHeroHpBar").style.width=Math.max(0,Math.min(100,p.hp/p.maxHp*100))+"%";
+ $("battleEnemyHpText").textContent=Math.max(0,b.hp)+" / "+b.maxHp;
+ $("battleEnemyHpBar").style.width=Math.max(0,Math.min(100,b.hp/b.maxHp*100))+"%";
+ $("mpText").textContent=b.mp+" / "+b.maxMp;
+}
+function animateClass(id,cls){
+ const el=$(id);el.classList.remove("attack","hit","heal","spawn");
+ void el.offsetWidth;el.classList.add(cls);
+ setTimeout(()=>el.classList.remove(cls),500);
+}
+function showDamage(value,healing=false){
+ const el=$("hitNumber");el.textContent=(healing?"+":"-")+value;el.classList.toggle("heal-number",healing);el.classList.remove("hidden");
+ void el.offsetWidth;el.style.animation="none";void el.offsetWidth;el.style.animation="";
+ setTimeout(()=>el.classList.add("hidden"),800);
+}
+function setBattleMessage(text){$("battleMessage").textContent=text;}
+function playerAction(action){
+ const b=battleState;if(!b||b.done||battleLock)return;
+ let damage=0;
+ if(action==="attack"){
+  damage=Math.max(1,atk()+Math.floor(Math.random()*7)-3);
+  animateClass("heroFighter","attack");
+  setBattleMessage("기본 공격! "+damage+" 피해를 줬어.");
+ }else if(action==="slash"){
+  if(b.mp<10){setBattleMessage("MP가 부족해!");return;}
+  b.mp-=10;damage=Math.max(1,Math.floor(atk()*1.8)+Math.floor(Math.random()*8));
+  animateClass("heroFighter","attack");
+  setBattleMessage("💥 파워 슬래시! 강력한 일격으로 "+damage+" 피해!");
+ }else if(action==="fire"){
+  if(b.mp<15){setBattleMessage("MP가 부족해!");return;}
+  b.mp-=15;damage=Math.max(1,Math.floor(atk()*1.5)+p.level*3);
+  animateClass("heroFighter","attack");
+  setBattleMessage("🔥 화염구가 폭발해 "+damage+" 피해를 줬어!");
+ }else if(action==="heal"){
+  if(b.mp<12){setBattleMessage("MP가 부족해!");return;}
+  if(p.hp>=p.maxHp){setBattleMessage("체력이 가득 차 있어!");return;}
+  b.mp-=12;const heal=Math.min(35+p.level*2,p.maxHp-p.hp);p.hp+=heal;
+  animateClass("heroFighter","heal");showDamage(heal,true);
+  setBattleMessage("✨ 회복 스킬! 체력 "+heal+" 회복!");
+  updateBattleUI();render();
+  if(b.hp<=0)return finishBattle(true);
+  battleLock=true;setTimeout(()=>{battleLock=false;if(battleState===b)enemyTurn();},650);return;
+ }
+ b.hp-=damage;animateClass("enemyFighter","hit");showDamage(damage,false);
+ updateBattleUI();render();
+ if(b.hp<=0){finishBattle(true);return;}
+ battleLock=true;document.querySelectorAll(".battle-actions button").forEach(btn=>btn.disabled=true);
+ setTimeout(()=>{battleLock=false;if(battleState===b&&!b.done){document.querySelectorAll(".battle-actions button").forEach(btn=>btn.disabled=false);enemyTurn();}},550);
+}
+function enemyTurn(){
+ const b=battleState;if(!b||b.done)return;
+ const damage=Math.max(1,b.monster.atk+Math.floor(Math.random()*7)-3);
+ p.hp-=damage;animateClass("enemyFighter","attack");showDamage(damage,false);
+ setBattleMessage(b.monster.name+"의 반격! "+damage+" 피해를 받았어.");
+ if(p.hp<=0){
+  p.hp=p.maxHp;p.gold=Math.floor(p.gold/2);
+  setBattleMessage("패배… 마을에서 회복했어. 골드 절반을 잃었어.");
+  finishBattle(false);return;
+ }
+ updateBattleUI();render();
+}
+function finishBattle(won){
+ const b=battleState;if(!b||b.done)return;b.done=true;battleLock=false;
+ document.querySelectorAll(".battle-actions button").forEach(btn=>btn.disabled=true);
+ if(won){
+  p.kills++;p.gold+=b.monster.gold;p.exp+=b.monster.exp;
+  logMsg(b.monster.name+" 처치! 경험치 +"+b.monster.exp+", 골드 +"+b.monster.gold,"good");
+  if(b.boss){p.bossKills++;p.gold+=100;logMsg("보스 추가 보상: 골드 +100","goldText");}
+  if(Math.random()<(b.boss?0.25:0.12)){const item=["작은 보석","마법 가루","희귀한 뼈"][Math.floor(Math.random()*3)];p.inventory.push(item);logMsg("아이템 획득: "+item,"good");}
+  if(Math.random()<(b.boss?0.35:0.06)){const available=weapons.filter(w=>!p.owned.includes(w.name)&&w.cost>0);if(available.length){const drop=available[Math.floor(Math.random()*available.length)];p.owned.push(drop.name);logMsg("무기 획득: "+drop.name,"good");}}
+  gainXp(b.monster.exp);
+  $("sceneBanner").textContent="🏆 승리!";
+  setBattleMessage("승리! 경험치와 골드를 획득했어.");
+ }else{
+  $("sceneBanner").textContent="💫 패배";
+  logMsg("전투에서 패배했어. 마을에서 회복했고 골드 절반을 잃었어.","bad");
+ }
+ p.hp=Math.max(1,p.hp);
+ b.mp=b.maxMp;
+ $("battleContinue").classList.remove("hidden");
+ updateBattleUI();render();saveGame(false);
+}
+function tryEscape(){
+ const b=battleState;if(!b||b.done)return;
+ if(b.boss){setBattleMessage("보스 전투에서는 도망칠 수 없어!");return;}
+ if(Math.random()<0.75){setBattleMessage("무사히 도망쳤어.");b.done=true;$("sceneBanner").textContent="🏃 전투 종료";document.querySelectorAll(".battle-actions button").forEach(btn=>btn.disabled=true);$("battleContinue").classList.remove("hidden");}
+ else{setBattleMessage("도망 실패! 적의 공격을 받아!");enemyTurn();}
+}
+function closeBattle(){
+ $("battleScene").classList.add("hidden");battleState=null;battleLock=false;
+ render();showPanel("home");saveGame(false);
+}
+function usePotion(){
+ if(p.potions<=0){logMsg("포션이 없어! 상점에서 구매해 줘.","bad");return;}
+ if(p.hp>=p.maxHp){logMsg("체력이 이미 가득 찼어.");return;}
+ const heal=Math.min(40,p.maxHp-p.hp);p.hp+=heal;p.potions--;
+ logMsg("포션 사용! 체력 "+heal+" 회복. 남은 포션: "+p.potions,"good");render();
+}
+function weaponEmoji(name){
+ if(name.includes("검")||name.includes("슬레이어")||name.includes("칼날"))return "⚔️";
+ if(name.includes("도끼")||name.includes("파괴자"))return "🪓";
+ if(name.includes("창"))return "🔱";
+ if(name.includes("낫")||name.includes("인도자"))return "🌙";
+ if(name.includes("활"))return "🏹";
+ if(name.includes("지팡이"))return "🪄";
+ return "🗡️";
+}
+function showPanel(which){
+ const panel=$("panel");panel.innerHTML="";
+ if(which==="home"){panel.innerHTML="<h3>목표</h3><p class='muted'>사냥으로 레벨을 올리고 강력한 무기를 모아 마왕을 쓰러뜨려 봐!</p>";return;}
+ if(which==="shop"){
+  panel.innerHTML="<h3>🛒 상점</h3><p class='muted'>포션 1개는 30골드야.</p>";
+  const potion=document.createElement("button");potion.textContent="포션 구매 (30골드)";potion.onclick=()=>{if(p.gold<30){logMsg("골드가 부족해!","bad");return;}p.gold-=30;p.potions++;logMsg("포션 1개 구매! 보유: "+p.potions,"good");render();showPanel("shop");};panel.appendChild(potion);
+  const list=document.createElement("div");list.className="list";list.style.marginTop="10px";
+  weapons.forEach(w=>{const item=document.createElement("div");item.className="item";const left=document.createElement("div");left.innerHTML="<span class=\"weapon-icon\">"+weaponEmoji(w.name)+"</span><span><b></b><small></small></span>";left.children[1].children[0].textContent=w.name;left.children[1].children[1].textContent=w.rarity+" · 공격력 +"+w.atk;const btn=document.createElement("button");btn.className="gold";btn.textContent=p.owned.includes(w.name)?"보유 중":w.cost+"G 구매";btn.disabled=p.owned.includes(w.name)||p.gold<w.cost;btn.onclick=()=>{p.gold-=w.cost;p.owned.push(w.name);logMsg(w.name+" 구매 완료!","good");render();showPanel("shop");};item.append(left,btn);list.appendChild(item);});panel.appendChild(list);
+ }else if(which==="weapons"){
+  panel.innerHTML="<h3>⚔ 무기 관리</h3><p>강화 비용: "+(50*(p.weaponLevel+1))+"골드 (강화할 때마다 공격력 +5)</p>";
+  const up=document.createElement("button");up.className="gold";up.textContent="현재 무기 강화";up.onclick=()=>{const cost=50*(p.weaponLevel+1);if(p.gold<cost){logMsg("골드가 부족해!","bad");return;}p.gold-=cost;p.weaponLevel++;logMsg(p.weapon+" 강화 성공! +"+p.weaponLevel,"good");render();showPanel("weapons");};panel.appendChild(up);
+  const list=document.createElement("div");list.className="list";list.style.marginTop="10px";
+  p.owned.forEach(name=>{const w=weapons.find(x=>x.name===name);const item=document.createElement("div");item.className="item";const left=document.createElement("div");left.innerHTML="<span class=\"weapon-icon\">"+weaponEmoji(name)+"</span><span><b></b><small></small></span>";left.children[1].children[0].textContent=name;left.children[1].children[1].textContent="공격력 +"+w.atk;const btn=document.createElement("button");btn.textContent=p.weapon===name?"장착 중":"장착";btn.disabled=p.weapon===name;btn.onclick=()=>{p.weapon=name;p.weaponLevel=0;logMsg(name+" 장착!","good");render();showPanel("weapons");};item.append(left,btn);list.appendChild(item);});panel.appendChild(list);
+ }else if(which==="job"){
+  panel.innerHTML="<h3>🎖 전직</h3>";
+  if(p.job!=="초보자"){panel.innerHTML+="<p>이미 "+p.job+" 직업이야.</p>";return;}
+  if(p.level<10){panel.innerHTML+="<p class='muted'>레벨 10부터 전직할 수 있어. 현재 레벨: "+p.level+"</p>";return;}
+  [["기사",15],["마법사",20],["암살자",18]].forEach(([name,bonus])=>{const b=document.createElement("button");b.style.margin="4px";b.textContent=name+" (공격력 +"+bonus+")";b.onclick=()=>{p.job=name;p.jobBonus=bonus;logMsg(name+"로 전직 완료!","good");render();showPanel("job");};panel.appendChild(b);});
+ }else if(which==="quest"){
+  panel.innerHTML="<h3>📜 퀘스트</h3><p>몬스터 5마리 처치하기</p><p>진행도: "+Math.min(5,p.kills)+" / 5</p>";
+  const b=document.createElement("button");b.className="gold";b.textContent=p.questClaimed?"보상 수령 완료":"퀘스트 보상 받기";b.disabled=p.questClaimed||p.kills<5;b.onclick=()=>{p.questClaimed=true;p.gold+=100;gainXp(50);logMsg("퀘스트 완료! 골드 +100, 경험치 +50","good");render();showPanel("quest");};panel.appendChild(b);
+ }else if(which==="inventory"){
+  panel.innerHTML="<h3>🎒 인벤토리</h3><p>포션: "+p.potions+"개</p>";
+  if(!p.inventory.length)panel.innerHTML+="<p class='muted'>아이템이 없어. 사냥해서 모아 봐!</p>";
+  else p.inventory.forEach((item,i)=>{const line=document.createElement("div");line.className="item";const name=document.createElement("b");name.textContent=item;const sell=document.createElement("button");sell.textContent="20G에 판매";sell.onclick=()=>{p.inventory.splice(i,1);p.gold+=20;logMsg(item+" 판매! 골드 +20","good");render();showPanel("inventory");};line.append(name,sell);panel.appendChild(line);});
+ }else if(which==="armor"){
+  panel.innerHTML="<h3>🛡 방어구</h3><p class='muted'>구매한 방어구는 자동 장착돼 최대 체력이 증가해.</p>";
+  [["가죽 갑옷",80,10],["철제 갑옷",250,25],["기사의 갑옷",900,55],["용비늘 갑옷",3500,100]].forEach(([n,c,h])=>{const d=document.createElement("div");d.className="item";const t=document.createElement("span");t.textContent=n+" · 최대 체력 +"+h;const b=document.createElement("button");b.textContent=p.armor?.[n]?"보유 중":c+"G 구매";b.disabled=!!p.armor?.[n]||p.gold<c;b.onclick=()=>{p.gold-=c;p.armor[n]={hp:h};p.maxHp+=h;p.hp+=h;logMsg(n+" 획득! 최대 체력 +"+h,"good");render();showPanel("armor");};d.append(t,b);panel.appendChild(d);});
+ }else if(which==="skills"){
+  panel.innerHTML="<h3>✨ 스킬 트리</h3><p>스킬 포인트: "+(p.skillPoints||0)+"</p>";
+  [["강타","공격력 영구 +3"],["생명력","최대 체력 +20"],["행운","골드 보상 +5% (표시용)" ]].forEach(([n,desc])=>{const d=document.createElement("div");d.className="item";const t=document.createElement("span");t.innerHTML="<b>"+n+"</b><small>"+desc+" · 레벨 "+(p.skills?.[n]||0)+"</small>";const b=document.createElement("button");b.textContent="포인트 1 사용";b.disabled=(p.skillPoints||0)<1||(p.skills?.[n]||0)>=5;b.onclick=()=>{p.skillPoints--;p.skills[n]=(p.skills[n]||0)+1;if(n==="강타")p.baseAtk+=3;if(n==="생명력"){p.maxHp+=20;p.hp+=20;}logMsg(n+" 스킬 강화!","good");render();showPanel("skills");};d.append(t,b);panel.appendChild(d);});
+ }else if(which==="regions"){
+  panel.innerHTML="<h3>🗺 지역 탐험</h3><p>지역은 레벨에 따라 열려.</p>";
+  [[1,"초보자 숲"],[2,"고블린 동굴"],[3,"언데드 성"],[4,"용의 계곡"],[5,"마왕성"]].forEach(([r,n])=>{const d=document.createElement("div");d.className="item";const t=document.createElement("b");t.textContent=r+". "+n;const b=document.createElement("button");b.textContent=p.level>=(r-1)*5+1?"탐험":"레벨 "+((r-1)*5+1)+" 필요";b.disabled=p.level<(r-1)*5+1;b.onclick=()=>{p.region=r;logMsg(n+" 지역에 입장했어!","good");hunt(r===5);};d.append(t,b);panel.appendChild(d);});
+ }else if(which==="pets"){
+  p.pets=p.pets||[];panel.innerHTML="<h3>🐾 펫</h3><p>보유: "+(p.pets.join(", ")||"없음")+"</p><p class='muted'>펫은 수집용 프로토타입이야.</p>";const b=document.createElement("button");b.textContent="펫 알 구매 (500G)";b.disabled=p.gold<500;b.onclick=()=>{p.gold-=500;const pet=["불꽃 여우","꼬마 드래곤","달빛 고양이","숲의 정령"][Math.floor(Math.random()*4)];p.pets.push(pet);logMsg("펫 획득: "+pet,"good");render();showPanel("pets");};panel.appendChild(b);
+ }else if(which==="tower"){
+  panel.innerHTML="<h3>🏰 무한의 탑</h3><p>최고 층: "+(p.tower||0)+"층</p>";const b=document.createElement("button");b.textContent="탑 도전";b.onclick=()=>{if(atk()+p.level*3<(p.tower+1)*18){logMsg("적이 너무 강해! 장비를 강화해 봐.","bad");return;}p.tower++;p.gold+=50+p.tower*10;gainXp(20+p.tower*5);logMsg("탑 "+p.tower+"층 클리어!","good");render();showPanel("tower");};panel.appendChild(b);
+ }else if(which==="achievements"){
+  panel.innerHTML="<h3>🏆 업적과 칭호</h3><p>현재 칭호: "+(p.title||"초보 모험가")+"</p>";[["첫 사냥","몬스터 1마리 처치",p.kills>=1],["숙련된 모험가","몬스터 25마리 처치",p.kills>=25],["보스 사냥꾼","보스 5마리 처치",p.bossKills>=5],["강철의 의지","레벨 20 달성",p.level>=20]].forEach(([n,dsc,ok])=>{const d=document.createElement("div");d.className="item";const t=document.createElement("span");t.innerHTML="<b>"+(ok?"🏅 ":"🔒 ")+n+"</b><small>"+dsc+"</small>";const b=document.createElement("button");b.textContent=ok?"칭호 장착":"미달성";b.disabled=!ok;b.onclick=()=>{p.title=n;logMsg("칭호 장착: "+n,"good");render();showPanel("achievements");};d.append(t,b);panel.appendChild(d);});
+ }else if(which==="enchant"){
+  p.enchant=p.enchant||{};panel.innerHTML="<h3>💎 무기 인챈트</h3><p>현재 무기: "+p.weapon+"</p><p>마법 가루: "+p.inventory.filter(x=>x==="마법 가루").length+"개 · 작은 보석: "+p.inventory.filter(x=>x==="작은 보석").length+"개</p><p class='muted'>인챈트는 현재 무기에만 적용돼. 재료가 필요하고, 실패해도 무기는 사라지지 않아.</p>";
+  [["화염", "추가 화염 피해",0.75],["번개","확률형 번개 피해",0.55],["흡혈","공격 시 체력 회복",0.35],["맹독","지속 피해 효과",0.45],["신성","언데드 추가 피해",0.25]].forEach(([n,dsc,rate])=>{const d=document.createElement("div");d.className="item";const t=document.createElement("span");t.innerHTML="<b>"+n+" 인챈트</b><small>"+dsc+" · 성공 확률 "+Math.round(rate*100)+"%</small>";const b=document.createElement("button");b.textContent=p.enchant[p.weapon]===n?"적용 중":"시도 (마법 가루 1개 + 100G)";b.disabled=p.enchant[p.weapon]===n||p.gold<100||!p.inventory.includes("마법 가루");b.onclick=()=>{p.gold-=100;p.inventory.splice(p.inventory.indexOf("마법 가루"),1);if(Math.random()<rate){p.enchant[p.weapon]=n;logMsg(n+" 인챈트 성공! "+p.weapon+"에 적용됐어.","good");}else logMsg("인챈트 실패! 무기는 안전하게 보존됐어.","bad");render();showPanel("enchant");};d.append(t,b);panel.appendChild(d);});
+ }else if(which==="craft"){
+  panel.innerHTML="<h3>🔨 제작·분해</h3><p class='muted'>재료를 모아 장비를 만들거나, 보유한 무기를 분해해 재료를 얻어.</p>";
+  const c=document.createElement("button");c.textContent="미스릴 검 제작 (작은 보석 2개 + 마법 가루 2개 + 500G)";c.disabled=p.gold<500||p.inventory.filter(x=>x==="작은 보석").length<2||p.inventory.filter(x=>x==="마법 가루").length<2||p.owned.includes("미스릴 검");c.onclick=()=>{p.gold-=500;for(let i=0;i<2;i++){p.inventory.splice(p.inventory.indexOf("작은 보석"),1);p.inventory.splice(p.inventory.indexOf("마법 가루"),1);}p.owned.push("미스릴 검");logMsg("미스릴 검 제작 성공!","good");render();showPanel("craft");};panel.appendChild(c);
+  const h=document.createElement("h3");h.textContent="무기 분해";h.style.marginTop="16px";panel.appendChild(h);p.owned.filter(n=>n!=="나무 검"&&n!==p.weapon).forEach(n=>{const d=document.createElement("div");d.className="item";const t=document.createElement("b");t.textContent=n;const b=document.createElement("button");b.textContent="분해";b.onclick=()=>{p.owned=p.owned.filter(x=>x!==n);p.inventory.push("마법 가루");p.gold+=25;logMsg(n+" 분해 완료! 마법 가루 1개와 25G 획득.","good");render();showPanel("craft");};d.append(t,b);panel.appendChild(d);});
+ }else if(which==="dungeon"){
+  panel.innerHTML="<h3>🌀 던전과 메인 스토리</h3><p>스토리 진행도: "+(p.story||0)+" / 5</p><p class='muted'>각 장을 진행하면 골드와 경험치를 얻고 다음 장이 해금돼.</p>";
+  [[1,"숲의 이상 현상","숲의 왕 조사"],[2,"동굴의 봉인","고블린 대장 격파"],[3,"죽은 왕의 성","해골 기사 격파"],[4,"용의 각성","불꽃 드래곤 격파"],[5,"마왕의 귀환","마왕에게 도전"]].forEach(([n,title,desc])=>{const d=document.createElement("div");d.className="item";const t=document.createElement("span");t.innerHTML="<b>제"+n+"장 · "+title+"</b><small>"+desc+"</small>";const b=document.createElement("button");b.textContent=(p.story||0)>=n?"완료":(p.level>=n*3?"진행":"레벨 "+(n*3)+" 필요");b.disabled=(p.story||0)>=n||p.level<n*3;b.onclick=()=>{p.story=n;p.gold+=100*n;gainXp(40*n);logMsg("메인 스토리 제"+n+"장 완료! 보상 획득.","good");render();showPanel("dungeon");};d.append(t,b);panel.appendChild(d);});
+  const d=document.createElement("button");d.className="gold";d.style.marginTop="12px";d.textContent="일일 던전 도전";d.onclick=()=>{const reward=100+p.level*10;p.gold+=reward;gainXp(25+p.level*3);logMsg("던전 클리어! "+reward+"G와 경험치를 획득했어.","good");render();};panel.appendChild(d);
+ }else if(which==="online"){
+  panel.innerHTML="<h3>🌐 온라인 광장</h3><p class='muted'>서버에 접속한 계정끼리 랭킹과 채팅 기록을 공유해. 거래와 PvP는 요청 기록 단계의 프로토타입이야.</p>";
+  const rank=document.createElement("button");rank.textContent="🏆 랭킹 불러오기";rank.onclick=async()=>{try{const x=await api("/api/leaderboard");const box=document.createElement("div");box.className="list";x.leaderboard.forEach((u,i)=>{const d=document.createElement("div");d.className="item";d.textContent=(i+1)+"위 · "+u.username+" · Lv."+u.level+" · 보스 "+u.bossKills;box.appendChild(d);});panel.appendChild(box);}catch(e){logMsg(e.message,"bad");}};panel.appendChild(rank);
+  const chat=document.createElement("div");chat.style.marginTop="12px";chat.innerHTML='<h3>💬 공용 채팅</h3><input id="chatMessage" maxlength="240" placeholder="메시지 입력"><button id="sendChat">전송</button><button class="secondary" id="refreshChat">새로고침</button><div id="chatList" class="log" style="margin-top:8px"></div>';panel.appendChild(chat);
+  $("sendChat").onclick=async()=>{try{await api("/api/chat","POST",{message:$("chatMessage").value});$("chatMessage").value="";$("refreshChat").click();}catch(e){logMsg(e.message,"bad");}};$("refreshChat").onclick=async()=>{try{const x=await api("/api/chat");$("chatList").textContent=x.messages.map(m=>"["+new Date(m.at).toLocaleTimeString()+"] "+m.username+": "+m.message).join("\n");}catch(e){logMsg(e.message,"bad");}};
+  const tr=document.createElement("div");tr.style.marginTop="12px";tr.innerHTML='<h3>🤝 거래 게시판</h3><input id="tradeItem" placeholder="아이템 이름"><input id="tradePrice" type="number" min="1" placeholder="가격 (골드)" style="margin-top:6px"><button id="postTrade">등록</button><button class="secondary" id="loadTrades">불러오기</button><div id="tradeList" class="list"></div>';panel.appendChild(tr);
+  $("postTrade").onclick=async()=>{try{await api("/api/trade","POST",{item:$("tradeItem").value,price:Number($("tradePrice").value)});logMsg("거래 게시글 등록 완료. 아이템/골드 자동 이전은 아직 미구현이야.","good");$("loadTrades").click();}catch(e){logMsg(e.message,"bad");}};$("loadTrades").onclick=async()=>{try{const x=await api("/api/trade");const box=$("tradeList");box.innerHTML="";x.trades.forEach(t=>{const d=document.createElement("div");d.className="item";const txt=document.createElement("span");txt.textContent=t.item+" · "+t.price+"G · "+t.seller;const b=document.createElement("button");b.textContent="구매 요청";b.onclick=async()=>{try{const z=await api("/api/trade/"+t.id,"POST",{});alert(z.note);}catch(e){alert(e.message);}};d.append(txt,b);box.appendChild(d);});}catch(e){logMsg(e.message,"bad");}};
+  const pv=document.createElement("div");pv.style.marginTop="12px";pv.innerHTML='<h3>⚔ PvP 대전 신청</h3><input id="pvpOpponent" placeholder="상대 아이디"><button id="pvpChallenge">신청</button>';panel.appendChild(pv);$("pvpChallenge").onclick=async()=>{try{await api("/api/pvp","POST",{opponent:$("pvpOpponent").value});logMsg("대전 신청 기록 완료. 실시간 PvP 전투는 아직 미구현이야.","good");}catch(e){logMsg(e.message,"bad");}};
+ }
+}
+readDB();
+async function restoreOnlineSession(){
+ if(!onlineToken)return;
+ try{
+  const result=await api("/api/me");currentUser=result.username;
+  p=result.game?JSON.parse(JSON.stringify(result.game)):newGame();
+  p.armor=p.armor||{};p.skills=p.skills||{};p.skillPoints=p.skillPoints||0;p.pets=p.pets||[];p.enchant=p.enchant||{};p.achievements=p.achievements||[];p.inventory=p.inventory||[];p.region=p.region||1;p.tower=p.tower||0;
+  $("authView").classList.add("hidden");$("gameView").classList.remove("hidden");$("headerUser").textContent="온라인 로그인: "+currentUser;$("welcome").textContent=p.name+"의 모험";render();showPanel("home");logMsg("서버에서 모험 데이터를 불러왔어!","good");
+ }catch(e){onlineToken="";localStorage.removeItem("legendRpgOnlineToken");}
+}
+restoreOnlineSession();
+</script>
+</body>
+</html>
